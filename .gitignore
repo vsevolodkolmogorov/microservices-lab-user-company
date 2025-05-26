@@ -1,0 +1,29 @@
+# Maven
+/target/
+**/target/
+
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Logs
+*.log
+*.class
+/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+*.jar
+*.war
+docker-compose.override.yml
+
+# Env files
+.env
+**/.env

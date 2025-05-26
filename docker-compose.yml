@@ -1,0 +1,69 @@
+services:
+  user-db:
+    image: postgres:15
+    container_name: user-db
+    restart: always
+    environment:
+      POSTGRES_DB: avb_user_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - user_db_data:/var/lib/postgresql/data
+    networks:
+      - avb-network
+
+  company-db:
+    image: postgres:15
+    container_name: company-db
+    restart: always
+    environment:
+      POSTGRES_DB: avb_company_db
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - company_db_data:/var/lib/postgresql/data
+    networks:
+      - avb-network
+
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    restart: on-failure
+    ports:
+      - "8081:8081"
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/avb_user_db
+    depends_on:
+      - user-db
+    networks:
+      - avb-network
+
+  company-service:
+    build:
+      context: ./company-service
+    container_name: company-service
+    restart: on-failure
+    ports:
+      - "8082:8082"
+    environment:
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://company-db:5432/avb_company_db
+    depends_on:
+      - company-db
+    networks:
+      - avb-network
+
+volumes:
+  user_db_data:
+  company_db_data:
+
+networks:
+  avb-network:
