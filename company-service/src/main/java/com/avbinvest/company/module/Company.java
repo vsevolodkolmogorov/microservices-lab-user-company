@@ -6,11 +6,11 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Builder
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @EqualsAndHashCode
 public class Company {
     @Id

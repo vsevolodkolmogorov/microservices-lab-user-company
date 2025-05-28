@@ -1,5 +1,6 @@
 package com.avbinvest.user.util;
 
+import com.avbinvest.user.dto.CompanyDTO;
 import com.avbinvest.user.dto.UserRequestDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
 import com.avbinvest.user.module.User;
@@ -14,13 +15,13 @@ public class UserConverter {
                 .build();
     }
 
-    public static UserResponseDTO convertEntityToDto(User user) {
+    public static UserResponseDTO convertEntityToDto(User user, CompanyDTO company) {
         return UserResponseDTO.builder()
                 .Id(user.getId())
                 .FirstName(user.getFirstName())
                 .LastName(user.getLastName())
                 .phoneNumber(user.getPhoneNumber())
-                .company(null)
+                .company(company)
                 .build();
     }
 }

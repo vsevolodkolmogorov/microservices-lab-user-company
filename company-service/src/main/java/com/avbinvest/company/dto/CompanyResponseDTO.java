@@ -16,6 +16,5 @@ public class CompanyResponseDTO {
     private Long Id;
     private String name;
     private BigDecimal budget;
-    private String phoneNumber;
     private List<UserDTO> employeeIds;
 }

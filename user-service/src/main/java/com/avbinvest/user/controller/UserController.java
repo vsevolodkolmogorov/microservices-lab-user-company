@@ -5,7 +5,6 @@ import com.avbinvest.user.dto.UserResponseDTO;
 import com.avbinvest.user.service.UserService;
 import com.avbinvest.user.validation.OnCreate;
 import com.avbinvest.user.validation.OnUpdate;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Validated
 public class UserController {
 
     private final UserService userService;
@@ -31,6 +31,12 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
         UserResponseDTO user = userService.getUserById(id);
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/getUsersByIds")
+    public ResponseEntity<List<UserResponseDTO>> getUsersByIds(@RequestBody List<Long> ids) {
+        List<UserResponseDTO> users = userService.getUsersByIds(ids);
+        return ResponseEntity.ok(users);
     }
 
     @PostMapping

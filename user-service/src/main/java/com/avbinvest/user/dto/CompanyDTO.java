@@ -16,5 +16,4 @@ public class CompanyDTO {
     private Long Id;
     private String name;
     private BigDecimal budget;
-    private List<Long> employee;
 }

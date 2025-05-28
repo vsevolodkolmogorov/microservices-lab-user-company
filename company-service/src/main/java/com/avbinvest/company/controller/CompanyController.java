@@ -14,8 +14,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/company")
+@RequestMapping("/api/company")
 @RequiredArgsConstructor
+@Validated
 public class CompanyController {
 
     private final CompanyService companyService;
@@ -36,6 +37,18 @@ public class CompanyController {
     public ResponseEntity<CompanyResponseDTO> createCompany(@Validated(OnCreate.class) @RequestBody CompanyRequestDTO userDTO) {
         CompanyResponseDTO user = companyService.createCompany(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
+
+    @PostMapping("/{id}/employees")
+    public ResponseEntity<Void> addEmployee(@PathVariable Long id, @RequestBody Long userId) {
+        companyService.addEmployee(id,userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}/employees/{userId}")
+    public ResponseEntity<Void> removeEmployee(@PathVariable Long id, @PathVariable Long userId) {
+        companyService.removeEmployee(id,userId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")

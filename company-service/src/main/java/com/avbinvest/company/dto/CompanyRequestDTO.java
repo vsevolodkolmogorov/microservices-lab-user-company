@@ -23,6 +23,7 @@ public class CompanyRequestDTO {
 
     @NotNull(message = "Budget must not be null", groups = OnCreate.class)
     private BigDecimal budget;
+
     @ElementCollection
     private List<Long> employeeIds;
 }

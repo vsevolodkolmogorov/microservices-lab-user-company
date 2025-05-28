@@ -12,5 +12,7 @@ public interface CompanyService {
     CompanyResponseDTO getCompanyById(Long id);
     List<CompanyResponseDTO> getAllCompanies();
     void deleteCompany(Long id);
+    void addEmployee(Long companyId, Long userId);
+    void removeEmployee(Long companyId, Long userId);
     List<UserDTO> fetchUsersByIds(List<Long> ids);
 }
