@@ -1,5 +1,6 @@
 package com.avbinvest.user.service;
 
+import com.avbinvest.user.feignClient.CompanyClient;
 import com.avbinvest.user.dto.CompanyDTO;
 import com.avbinvest.user.dto.UserRequestDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
@@ -10,7 +11,6 @@ import com.avbinvest.user.exception.UserNotFoundException;
 import com.avbinvest.user.module.User;
 import com.avbinvest.user.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -31,9 +31,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final RestTemplate restTemplate;
-
-    @Value("${services.company-service-url}")
-    private String companyServiceUrl;
+    private final CompanyClient companyClient;
 
     @Override
     public UserResponseDTO createUser(UserRequestDTO dto) {
@@ -135,11 +133,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CompanyDTO fetchCompanyById(Long id) {
-        String url = companyServiceUrl + id + "?includeEmployees=false";
-        log.info("[UserService] Calling company-service: GET {}", url);
-
         try {
-            return restTemplate.getForObject(url, CompanyDTO.class);
+            return companyClient.getCompanyById(id, false);
         } catch (HttpClientErrorException.NotFound ex) {
             log.warn("[UserService] Company with ID {} not found", id);
             throw new CompanyNotFoundException(id);
@@ -157,10 +152,7 @@ public class UserServiceImpl implements UserService {
             throw new ConflictException("User belongs to other company with id " + user.getCompanyId());
         }
 
-        String url = String.format("%s%d/addEmployee?userId=%d", companyServiceUrl, companyId, userId);
-        log.info("[UserService] Calling company-service: POST {}", url);
-
-        performCompanyServiceCall(url, HttpMethod.POST, "Failed to add user to company");
+        companyClient.addEmployee(companyId, userId);
 
         user.setCompanyId(companyId);
         log.info("[UserService] User {} successfully added to company {}", userId, companyId);
@@ -175,10 +167,7 @@ public class UserServiceImpl implements UserService {
 
         validateUserCompanyMembership(user, companyId);
 
-        String url = String.format("%s%d/removeEmployee?userId=%d", companyServiceUrl, companyId, userId);
-        log.info("[UserService] Calling company-service: DELETE {}", url);
-
-        performCompanyServiceCall(url, HttpMethod.DELETE, "Failed to remove user from company");
+        companyClient.removeEmployee(companyId, userId);
 
         user.setCompanyId(null);
         userRepository.save(user);
