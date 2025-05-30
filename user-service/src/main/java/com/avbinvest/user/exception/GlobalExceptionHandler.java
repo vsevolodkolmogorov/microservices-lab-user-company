@@ -7,9 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -19,6 +17,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleUserNotFound(UserNotFoundException ex) {
         ErrorResponseDTO errorResponse = new ErrorResponseDTO("UserNotFound", ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConflictException(ConflictException ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO("ConflictException", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(RestRequestFailedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRestRequestFailedException(RestRequestFailedException ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO("RestRequestFailedException", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
     @ExceptionHandler(CompanyNotFoundException.class)

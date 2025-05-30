@@ -9,8 +9,8 @@ import java.util.List;
 public interface CompanyService {
     CompanyResponseDTO createCompany(CompanyRequestDTO dto);
     CompanyResponseDTO updateCompany(Long id, CompanyRequestDTO dto);
-    CompanyResponseDTO getCompanyById(Long id);
-    List<CompanyResponseDTO> getAllCompanies();
+    CompanyResponseDTO getCompanyById(Long id, boolean includeEmployees);
+    List<CompanyResponseDTO> getAllCompanies(boolean includeEmployees);
     void deleteCompany(Long id);
     void addEmployee(Long companyId, Long userId);
     void removeEmployee(Long companyId, Long userId);

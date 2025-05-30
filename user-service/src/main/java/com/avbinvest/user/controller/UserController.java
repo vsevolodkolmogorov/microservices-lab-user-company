@@ -33,6 +33,12 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
+    @PostMapping("/{userId}/addUserToCompany")
+    public ResponseEntity<UserResponseDTO> addUserToCompany(@PathVariable Long userId, @RequestParam Long companyId) {
+        UserResponseDTO user = userService.addUserToCompany(userId, companyId);
+        return ResponseEntity.ok(user);
+    }
+
     @PostMapping("/getUsersByIds")
     public ResponseEntity<List<UserResponseDTO>> getUsersByIds(@RequestBody List<Long> ids) {
         List<UserResponseDTO> users = userService.getUsersByIds(ids);
@@ -54,6 +60,12 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{userId}/removeUserFromCompany")
+    public ResponseEntity<UserResponseDTO> removeUserFromCompany(@PathVariable Long userId, @RequestParam Long companyId) {
+        userService.removeUserFromCompany(userId, companyId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -26,6 +26,5 @@ public class UserRequestDTO {
     @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Invalid phone number", groups = {OnCreate.class, OnUpdate.class})
     private String phoneNumber;
 
-    @NotNull(message = "Company id must not be blank", groups = OnCreate.class)
     private Long companyId;
 }

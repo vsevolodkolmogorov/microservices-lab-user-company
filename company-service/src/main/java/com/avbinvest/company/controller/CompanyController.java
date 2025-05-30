@@ -23,13 +23,13 @@ public class CompanyController {
 
     @GetMapping
     public ResponseEntity<List<CompanyResponseDTO>> getAllCompanies() {
-        List<CompanyResponseDTO> usersList = companyService.getAllCompanies();
+        List<CompanyResponseDTO> usersList = companyService.getAllCompanies(true);
         return ResponseEntity.ok(usersList);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CompanyResponseDTO> getCompanyById(@PathVariable Long id) {
-        CompanyResponseDTO user = companyService.getCompanyById(id);
+    public ResponseEntity<CompanyResponseDTO> getCompanyById(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean includeEmployees) {
+        CompanyResponseDTO user = companyService.getCompanyById(id, includeEmployees);
         return ResponseEntity.ok(user);
     }
 
@@ -39,14 +39,14 @@ public class CompanyController {
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
-    @PostMapping("/{id}/employees")
-    public ResponseEntity<Void> addEmployee(@PathVariable Long id, @RequestBody Long userId) {
-        companyService.addEmployee(id,userId);
+    @PostMapping("/{id}/addEmployee")
+    public ResponseEntity<Void> addEmployee(@PathVariable Long id, @RequestParam Long userId) {
+        companyService.addEmployee(id, userId);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{id}/employees/{userId}")
-    public ResponseEntity<Void> removeEmployee(@PathVariable Long id, @PathVariable Long userId) {
+    @DeleteMapping("/{id}/removeEmployee")
+    public ResponseEntity<Void> removeEmployee(@PathVariable Long id, @RequestParam Long userId) {
         companyService.removeEmployee(id,userId);
         return ResponseEntity.noContent().build();
     }

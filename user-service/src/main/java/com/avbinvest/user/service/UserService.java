@@ -12,8 +12,8 @@ public interface UserService {
     UserResponseDTO getUserById(Long id);
     List<UserResponseDTO> getAllUsers();
     void deleteUser(Long id);
-    void addUserToCompany(Long companyId, Long userId);
     void removeUserFromCompany(Long companyId, Long userId);
+    UserResponseDTO addUserToCompany(Long companyId, Long userId);
     List<UserResponseDTO> getUsersByIds(List<Long> ids);
     CompanyDTO fetchCompanyById(Long id);
 
