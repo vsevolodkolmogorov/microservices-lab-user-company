@@ -6,16 +6,13 @@ import com.avbinvest.company.dto.UserDTO;
 import com.avbinvest.company.exceptions.CompanyNotFoundException;
 import com.avbinvest.company.exceptions.ConflictException;
 import com.avbinvest.company.exceptions.RestRequestFailedException;
+import com.avbinvest.company.feignClient.UserClient;
 import com.avbinvest.company.module.Company;
 import com.avbinvest.company.repository.CompanyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.*;
 
@@ -28,9 +25,8 @@ public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
     private final RestTemplate restTemplate;
+    private final UserClient userClient;
 
-    @Value("${services.user-service-url}")
-    private String userServiceUrl;
 
     @Override
     public CompanyResponseDTO createCompany(CompanyRequestDTO dto) {
@@ -159,25 +155,7 @@ public class CompanyServiceImpl implements CompanyService {
             return List.of();
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<List<Long>> request = new HttpEntity<>(ids, headers);
-
-        ResponseEntity<List<UserDTO>> response = restTemplate.exchange(
-                userServiceUrl + "getUsersByIds",
-                HttpMethod.POST,
-                request,
-                new ParameterizedTypeReference<>() {}
-        );
-
-        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-            log.info("[CompanyService] Successfully fetched {} users", response.getBody().size());
-            return response.getBody();
-        }
-
-        log.error("[CompanyService] Failed to fetch users from user-service, status: {}", response.getStatusCode());
-        throw new RestRequestFailedException("Failed to fetch users from user-service");
+        return userClient.getUsersByIds(ids);
     }
 
     // --- Private methods ---
@@ -204,30 +182,9 @@ public class CompanyServiceImpl implements CompanyService {
         }
     }
 
-
     private void callUserServiceRemoveUserFromCompany(Long userId, Long companyId) {
-        String url = String.format("%s%d/removeUserFromCompany?companyId=%d", userServiceUrl, userId, companyId);
-        log.debug("[CompanyService] Calling user-service to remove user: DELETE {}", url);
-        performUserServiceRequest(url, HttpMethod.DELETE, "Failed to remove user from company");
-    }
-
-    private void callUserServiceAddUserToCompany(Long userId, Long companyId) {
-        String url = String.format("%s%d/addUserToCompany?companyId=%d", userServiceUrl, userId, companyId);
-        log.debug("[CompanyService] Calling user-service to add user: POST {}", url);
-        performUserServiceRequest(url, HttpMethod.POST, "Failed to add user to company");
-    }
-
-    private void performUserServiceRequest(String url, HttpMethod method, String errorMessage) {
-        try {
-            ResponseEntity<Void> response = restTemplate.exchange(url, method, null, Void.class);
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("[CompanyService] User-service call failed. Status: {}", response.getStatusCode());
-                throw new RestRequestFailedException(errorMessage + ". Status: " + response.getStatusCode());
-            }
-        } catch (HttpClientErrorException ex) {
-            log.error("[CompanyService] User-service call error: {}", ex.getMessage());
-            throw new RestRequestFailedException(errorMessage + ": " + ex.getMessage());
-        }
+        log.debug("[CompanyService] Calling user-service to remove user");
+        userClient.removeUserFromCompany(userId, companyId);
     }
 
     private List<UserDTO> fetchUsersSafe(List<Long> ids) {

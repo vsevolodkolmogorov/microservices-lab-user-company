@@ -64,7 +64,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}/removeUserFromCompany")
-    public ResponseEntity<UserResponseDTO> removeUserFromCompany(@PathVariable Long userId, @RequestParam Long companyId) {
+    public ResponseEntity<Void> removeUserFromCompany(@PathVariable Long userId, @RequestParam Long companyId) {
         userService.removeUserFromCompany(userId, companyId);
         return ResponseEntity.noContent().build();
     }
