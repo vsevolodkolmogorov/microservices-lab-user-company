@@ -19,6 +19,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponseDTO> handleConflictException(ConflictException ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO("ConflictException", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
+    }
+
+    @ExceptionHandler(RestRequestFailedException.class)
+    public ResponseEntity<ErrorResponseDTO> handleRestRequestFailedException(RestRequestFailedException ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO("RestRequestFailedException", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<String> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
