@@ -6,14 +6,29 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 
+/**
+ * Data Transfer Object representing a Company.
+ * Used for transferring company data between services or layers.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class CompanyDTO {
-    private Long Id;
+
+    /**
+     * Unique identifier of the company.
+     */
+    private Long id;
+
+    /**
+     * Name of the company.
+     */
     private String name;
+
+    /**
+     * Budget allocated for the company.
+     */
     private BigDecimal budget;
 }

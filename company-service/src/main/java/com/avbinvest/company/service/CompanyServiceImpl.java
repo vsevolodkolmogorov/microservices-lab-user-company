@@ -17,6 +17,14 @@ import java.util.*;
 
 import static com.avbinvest.company.util.CompanyConverter.*;
 
+/**
+ * Service implementation for managing companies.
+ * <p>
+ * Provides CRUD operations for companies and handles business logic related to
+ * company creation, updates, deletion, and employee management.
+ * Integrates with user-service via Feign client to fetch and update employee data.
+ * </p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -25,7 +33,14 @@ public class CompanyServiceImpl implements CompanyService {
     private final CompanyRepository companyRepository;
     private final UserClient userClient;
 
-
+    /**
+     * Creates a new company based on the provided DTO.
+     * Validates uniqueness of company name before saving.
+     *
+     * @param dto the company data transfer object containing creation details
+     * @return the created company details along with its employees
+     * @throws ConflictException if a company with the same name already exists
+     */
     @Override
     public CompanyResponseDTO createCompany(CompanyRequestDTO dto) {
         log.info("[CompanyService] Creating company with name: {}", dto.getName());
@@ -40,6 +55,16 @@ public class CompanyServiceImpl implements CompanyService {
         return convertEntityToDto(company, users);
     }
 
+    /**
+     * Updates an existing company identified by its ID.
+     * Performs name conflict check if the name is changed.
+     *
+     * @param id  the company ID to update
+     * @param dto the company data transfer object containing update details
+     * @return the updated company details along with its employees
+     * @throws CompanyNotFoundException if company with given ID does not exist
+     * @throws ConflictException        if the new company name conflicts with another company
+     */
     @Override
     public CompanyResponseDTO updateCompany(Long id, CompanyRequestDTO dto) {
         log.info("[CompanyService] Updating company with id: {}", id);
@@ -58,6 +83,15 @@ public class CompanyServiceImpl implements CompanyService {
         return convertEntityToDto(updatedCompany, users);
     }
 
+    /**
+     * Retrieves a company by its ID.
+     * Optionally includes detailed employee information.
+     *
+     * @param id               the company ID to fetch
+     * @param includeEmployees if true, includes employee details; otherwise, returns empty list for employees
+     * @return the company details with optional employees
+     * @throws CompanyNotFoundException if company with given ID does not exist
+     */
     @Override
     public CompanyResponseDTO getCompanyById(Long id, boolean includeEmployees) {
         log.info("[CompanyService] Fetching company with id: {}", id);
@@ -68,6 +102,13 @@ public class CompanyServiceImpl implements CompanyService {
         return convertEntityToDto(company, users);
     }
 
+    /**
+     * Retrieves all companies.
+     * Optionally includes detailed employee information for each company.
+     *
+     * @param includeEmployees if true, includes employee details; otherwise, employees list will be empty
+     * @return list of all companies with optional employees
+     */
     @Override
     public List<CompanyResponseDTO> getAllCompanies(boolean includeEmployees) {
         log.info("[CompanyService] Fetching all companies with includeEmployees={}", includeEmployees);
@@ -83,6 +124,14 @@ public class CompanyServiceImpl implements CompanyService {
         return result;
     }
 
+    /**
+     * Deletes a company by its ID.
+     * Before deletion, notifies the user-service to remove all employees from the company.
+     *
+     * @param companyId the ID of the company to delete
+     * @throws CompanyNotFoundException     if company with given ID does not exist
+     * @throws RestRequestFailedException   if notification to user-service fails for any employee
+     */
     @Override
     public void deleteCompany(Long companyId) {
         log.info("[CompanyService] Deleting company with id: {}", companyId);
@@ -104,6 +153,14 @@ public class CompanyServiceImpl implements CompanyService {
         log.info("[CompanyService] Company deleted: {}", companyId);
     }
 
+    /**
+     * Adds an employee to the specified company.
+     * If the employee already exists in the company, no changes are made.
+     *
+     * @param companyId the ID of the company
+     * @param userId    the ID of the user to add as an employee
+     * @throws CompanyNotFoundException if company with given ID does not exist
+     */
     @Override
     public void addEmployee(Long companyId, Long userId) {
         log.info("[CompanyService] Adding employee {} to company {}", userId, companyId);
@@ -123,6 +180,14 @@ public class CompanyServiceImpl implements CompanyService {
         }
     }
 
+    /**
+     * Removes an employee from the specified company.
+     *
+     * @param companyId the ID of the company
+     * @param userId    the ID of the user to remove
+     * @throws CompanyNotFoundException if company with given ID does not exist
+     * @throws RuntimeException         if company has no employees or user not found in company
+     */
     @Override
     public void removeEmployee(Long companyId, Long userId) {
         log.info("[CompanyService] Removing employee {} from company {}", userId, companyId);
@@ -145,6 +210,12 @@ public class CompanyServiceImpl implements CompanyService {
         log.info("[CompanyService] User {} removed from company {}", userId, companyId);
     }
 
+    /**
+     * Fetches user details from user-service by their IDs.
+     *
+     * @param ids list of user IDs to fetch
+     * @return list of UserDTOs corresponding to the provided IDs
+     */
     @Override
     public List<UserDTO> fetchUsersByIds(List<Long> ids) {
         log.info("[CompanyService] Fetching users from user-service by ids: {}", ids);
@@ -156,13 +227,25 @@ public class CompanyServiceImpl implements CompanyService {
         return userClient.getUsersByIds(ids);
     }
 
-    // --- Private methods ---
+    // --- Private helper methods ---
 
+    /**
+     * Retrieves a company entity by ID or throws exception if not found.
+     *
+     * @param id company ID
+     * @return Company entity
+     * @throws CompanyNotFoundException if company not found
+     */
     private Company getCompanyOrThrow(Long id) {
-        return companyRepository.getCompanyById(id)
-                .orElseThrow(() -> new CompanyNotFoundException(id));
+        return companyRepository.getCompanyById(id).orElseThrow(() -> new CompanyNotFoundException(id));
     }
 
+    /**
+     * Checks if a company name already exists in the system.
+     *
+     * @param name company name to check
+     * @throws ConflictException if name conflict exists
+     */
     private void checkCompanyNameConflict(String name) {
         Company existing = companyRepository.getCompanyByName(name);
         if (existing != null) {
@@ -171,8 +254,15 @@ public class CompanyServiceImpl implements CompanyService {
         }
     }
 
+    /**
+     * Checks for company name conflict excluding a specific company ID (used during updates).
+     *
+     * @param name             new company name to check
+     * @param excludeCompanyId company ID to exclude from check
+     * @throws ConflictException if name conflict exists
+     */
     private void checkCompanyNameConflict(String name, Long excludeCompanyId) {
-        if (name.isEmpty() || name.isBlank())  throw new ConflictException("Company cannot have such name: " + name);
+        if (name.isEmpty() || name.isBlank()) throw new ConflictException("Company cannot have such name: " + name);
         Company existing = companyRepository.getCompanyByName(name);
         if (existing != null && !existing.getId().equals(excludeCompanyId)) {
             log.warn("[CompanyService] Name conflict during update: {}", name);
@@ -180,11 +270,23 @@ public class CompanyServiceImpl implements CompanyService {
         }
     }
 
+    /**
+     * Notifies the user-service to remove a user from a company.
+     *
+     * @param userId    ID of the user to remove
+     * @param companyId ID of the company
+     */
     private void callUserServiceRemoveUserFromCompany(Long userId, Long companyId) {
         log.debug("[CompanyService] Calling user-service to remove user");
         userClient.removeUserFromCompany(userId, companyId);
     }
 
+    /**
+     * Safely fetches users by their IDs, returning an empty list on failure.
+     *
+     * @param ids list of user IDs
+     * @return list of UserDTOs or empty list if fetch fails
+     */
     private List<UserDTO> fetchUsersSafe(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
@@ -197,17 +299,24 @@ public class CompanyServiceImpl implements CompanyService {
         }
     }
 
+    /**
+     * Creates a safe copy of the given list or returns an empty list if null.
+     *
+     * @param list original list
+     * @return new list copy or empty list
+     */
     private List<Long> safeCopy(List<Long> list) {
         return list == null ? new ArrayList<>() : new ArrayList<>(list);
     }
 
+    /**
+     * Applies partial updates from the DTO to the Company entity.
+     *
+     * @param company entity to patch
+     * @param dto     DTO with update data
+     */
     private void patchCompany(Company company, CompanyRequestDTO dto) {
-        log.debug("[CompanyService] Patching company {} with data: {}", company.getId(), dto);
-
-        Optional.ofNullable(dto.getName())
-                .ifPresent(company::setName);
-
-        Optional.ofNullable(dto.getBudget())
-                .ifPresent(company::setBudget);
+        if (dto.getName() != null) company.setName(dto.getName());
+        if (dto.getEmployeeIds() != null) company.setEmployeeIds(dto.getEmployeeIds());
     }
 }
