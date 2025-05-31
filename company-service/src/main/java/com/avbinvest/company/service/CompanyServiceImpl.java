@@ -12,7 +12,6 @@ import com.avbinvest.company.repository.CompanyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
@@ -24,7 +23,6 @@ import static com.avbinvest.company.util.CompanyConverter.*;
 public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
-    private final RestTemplate restTemplate;
     private final UserClient userClient;
 
 
