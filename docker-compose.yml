@@ -12,7 +12,7 @@ services:
     volumes:
       - user_db_data:/var/lib/postgresql/data
     networks:
-      - avb-network
+      - spring-net
 
   company-db:
     image: postgres:15
@@ -27,43 +27,105 @@ services:
     volumes:
       - company_db_data:/var/lib/postgresql/data
     networks:
-      - avb-network
+      - spring-net
+
+
+  config-service:
+    build: ./config-service
+    container_name: config-service
+    image: config-service
+    ports:
+      - "8888:8888"
+    networks:
+      - spring-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    image: eureka-server
+    restart: on-failure
+    depends_on:
+      - config-service
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+    networks:
+      - spring-net
+    env_file:
+      - .env
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    image: gateway-service
+    restart: on-failure
+    depends_on:
+      - config-service
+      - eureka-server
+      - user-service
+      - company-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    networks:
+      - spring-net
+    env_file:
+      - .env
+
 
   user-service:
-    build:
-      context: ./user-service
+    build: ./user-service
     container_name: user-service
+    image: user-service
     restart: on-failure
     ports:
       - "8081:8081"
     environment:
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/avb_user_db
+      SPRING_PROFILES_ACTIVE: docker
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/avb_user_db
     depends_on:
+      - config-service
       - user-db
+      - eureka-server
     networks:
-      - avb-network
+      - spring-net
+    env_file:
+      - .env
 
   company-service:
-    build:
-      context: ./company-service
+    build: ./company-service
     container_name: company-service
+    image: company-service
     restart: on-failure
     ports:
       - "8082:8082"
     environment:
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://company-db:5432/avb_company_db
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://company-db:5432/avb_company_db
+      SPRING_PROFILES_ACTIVE: docker
     depends_on:
+      - config-service
       - company-db
+      - eureka-server
     networks:
-      - avb-network
+      - spring-net
+    env_file:
+      - .env
 
 volumes:
   user_db_data:
   company_db_data:
 
 networks:
-  avb-network:
+  spring-net:
+    driver: bridge
