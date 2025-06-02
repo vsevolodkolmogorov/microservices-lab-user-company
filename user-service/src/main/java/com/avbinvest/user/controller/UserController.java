@@ -1,126 +1,88 @@
 package com.avbinvest.user.controller;
 
-import com.avbinvest.user.dto.UserRequestDTO;
+import com.avbinvest.user.dto.UserCreateDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
+import com.avbinvest.user.dto.UserUpdateDTO;
 import com.avbinvest.user.service.UserService;
-import com.avbinvest.user.validation.OnCreate;
-import com.avbinvest.user.validation.OnUpdate;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * REST controller for managing user entities.
- * Provides endpoints to create, update, retrieve, and delete users,
- * as well as to manage their association with companies.
- */
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class UserController {
 
     private final UserService userService;
 
-    /**
-     * Retrieves all users.
-     *
-     * @return HTTP 200 with the list of all users
-     */
     @GetMapping
-    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-        List<UserResponseDTO> usersList = userService.getAllUsers();
-        return ResponseEntity.ok(usersList);
+    public Page<UserResponseDTO> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        log.info("GET /api/users — getAllUsers() page={} size={}", page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        return userService.getAllUsers(pageable);
     }
 
-    /**
-     * Retrieves a user by their ID.
-     *
-     * @param id the ID of the user to retrieve
-     * @return HTTP 200 with user data if found
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
-        UserResponseDTO user = userService.getUserById(id);
-        return ResponseEntity.ok(user);
+    public UserResponseDTO getUserById(@PathVariable @Min(1) Long id) {
+        log.info("GET /api/users/{} — getUserById", id);
+        return userService.getUserById(id);
     }
 
-    /**
-     * Adds a user to a company.
-     *
-     * @param userId    ID of the user to add
-     * @param companyId ID of the company to add the user to (request param)
-     * @return HTTP 200 with updated user data
-     */
     @PostMapping("/{userId}/addUserToCompany")
-    public ResponseEntity<UserResponseDTO> addUserToCompany(@PathVariable Long userId, @RequestParam Long companyId) {
-        UserResponseDTO user = userService.addUserToCompany(userId, companyId);
-        return ResponseEntity.ok(user);
+    public UserResponseDTO addUserToCompany(@PathVariable @Min(1) Long userId,
+                                            @RequestParam @NotNull Long companyId) {
+        log.info("POST /api/users/{}/addUserToCompany — companyId={}", userId, companyId);
+        return userService.addUserToCompany(userId, companyId);
     }
 
-    /**
-     * Retrieves multiple users by their IDs.
-     *
-     * @param ids list of user IDs to fetch
-     * @return HTTP 200 with the list of found users
-     */
     @PostMapping("/getUsersByIds")
-    public ResponseEntity<List<UserResponseDTO>> getUsersByIds(@RequestBody List<Long> ids) {
-        List<UserResponseDTO> users = userService.getUsersByIds(ids);
-        return ResponseEntity.ok(users);
+    public Page<UserResponseDTO> getUsersByIds(@RequestBody @NotEmpty List<@Min(1) Long> ids,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "10") int size) {
+        log.info("POST /api/users/getUsersByIds — ids size={}", ids.size());
+        Pageable pageable = PageRequest.of(page, size);
+        return userService.getUsersByIds(ids, pageable);
     }
 
-    /**
-     * Creates a new user.
-     *
-     * @param userDTO the user data to create (validated on OnCreate group)
-     * @return HTTP 201 with created user data
-     */
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@Validated(OnCreate.class) @RequestBody UserRequestDTO userDTO) {
-        UserResponseDTO user = userService.createUser(userDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    public UserResponseDTO createUser(@Valid @RequestBody UserCreateDTO userDTO) {
+        log.info("POST /api/users — createUser: {}", userDTO);
+        return userService.createUser(userDTO);
     }
 
-    /**
-     * Updates an existing user.
-     *
-     * @param id      ID of the user to update
-     * @param userDTO user data to update (validated on OnUpdate group)
-     * @return HTTP 200 with updated user data
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Validated(OnUpdate.class) @RequestBody UserRequestDTO userDTO) {
-        UserResponseDTO user = userService.updateUser(id, userDTO);
-        return ResponseEntity.ok(user);
+    public UserResponseDTO updateUser(@PathVariable @Min(1) Long id,
+                                      @Valid @RequestBody UserUpdateDTO userDTO) {
+        log.info("PUT /api/users/{} — updateUser: {}", id, userDTO);
+        return userService.updateUser(id, userDTO);
     }
 
-    /**
-     * Deletes a user by their ID.
-     *
-     * @param id ID of the user to delete
-     * @return HTTP 204 No Content on successful deletion
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    @ResponseStatus(code = org.springframework.http.HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable @Min(1) Long id) {
+        log.info("DELETE /api/users/{} — deleteUser", id);
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Removes a user from a company.
-     *
-     * @param userId    ID of the user to remove
-     * @param companyId ID of the company to remove the user from (request param)
-     * @return HTTP 204 No Content on successful removal
-     */
     @DeleteMapping("/{userId}/removeUserFromCompany")
-    public ResponseEntity<Void> removeUserFromCompany(@PathVariable Long userId, @RequestParam Long companyId) {
+    @ResponseStatus(code = org.springframework.http.HttpStatus.NO_CONTENT)
+    public void removeUserFromCompany(@PathVariable @Min(1) Long userId,
+                                      @RequestParam @NotNull Long companyId) {
+        log.info("DELETE /api/users/{}/removeUserFromCompany — companyId={}", userId, companyId);
         userService.removeUserFromCompany(userId, companyId);
-        return ResponseEntity.noContent().build();
     }
 }

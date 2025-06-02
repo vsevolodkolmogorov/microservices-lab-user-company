@@ -1,4 +1,0 @@
-package com.avbinvest.company.validation;
-
-public interface OnUpdate {
-}

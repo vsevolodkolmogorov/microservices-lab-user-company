@@ -1,7 +1,7 @@
 package com.avbinvest.user.controller;
 
 import com.avbinvest.user.dto.CompanyDTO;
-import com.avbinvest.user.dto.UserRequestDTO;
+import com.avbinvest.user.dto.UserCreateDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
 import com.avbinvest.user.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +10,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -37,20 +41,29 @@ class UserControllerTest {
             1L, "OOO Company", BigDecimal.ONE
     );
 
-
     private final UserResponseDTO userResponse = new UserResponseDTO(
             1L, "John", "Doe", "+79615882388", companyDTO
     );
 
+    private final UserResponseDTO dto = new UserResponseDTO();
+    private final List<UserResponseDTO> dtoList = List.of(dto);
+    private final Page<UserResponseDTO> page = new PageImpl<>(dtoList);
+
 
     @Test
     void getAllUsers_shouldReturnList() throws Exception {
-        Mockito.when(userService.getAllUsers()).thenReturn(List.of(userResponse));
+        UserResponseDTO userDto = new UserResponseDTO();
+        userDto.setFirstName("John");
 
-        mockMvc.perform(get("/api/users"))
+        Page<UserResponseDTO> page = new PageImpl<>(List.of(userDto));
+
+        Mockito.when(userService.getAllUsers(PageRequest.of(0, 10))).thenReturn(page);
+
+        mockMvc.perform(get("/api/users")
+                        .param("page", "0")
+                        .param("size", "10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].firstName", is("John")));
+                .andExpect(jsonPath("$.content[0].firstName").value("John"));
     }
 
     @Test
@@ -75,18 +88,22 @@ class UserControllerTest {
     @Test
     void getUsersByIds_shouldReturnUsersList() throws Exception {
         List<Long> ids = List.of(1L, 2L);
-        Mockito.when(userService.getUsersByIds(ids)).thenReturn(List.of(userResponse));
+        Page<UserResponseDTO> page = new PageImpl<>(List.of(userResponse));
+        Mockito.when(userService.getUsersByIds(Mockito.eq(ids), Mockito.any(Pageable.class)))
+                .thenReturn(page);
 
         mockMvc.perform(post("/api/users/getUsersByIds")
+                        .param("page", "0")
+                        .param("size", "10")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(ids)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id", is(1)));
+                .andExpect(jsonPath("$.content[0].id").value(1));
     }
 
     @Test
     void createUser_shouldReturnCreatedUser() throws Exception {
-        UserRequestDTO request = new UserRequestDTO("Jane", "Doe", "+79615882388", null);
+        UserCreateDTO request = new UserCreateDTO("Jane", "Doe", "+79615882388", null);
         UserResponseDTO created = new UserResponseDTO(2L, "Jane", "Doe", "+79615882388", null);
 
         Mockito.when(userService.createUser(any())).thenReturn(created);
@@ -94,14 +111,14 @@ class UserControllerTest {
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName", is("Jane")))
                 .andExpect(jsonPath("$.lastName", is("Doe")));
     }
 
     @Test
     void updateUser_shouldReturnUpdatedUser() throws Exception {
-        UserRequestDTO request = new UserRequestDTO("Jane", "Doe", "+79615882388", null);
+        UserCreateDTO request = new UserCreateDTO("Jane", "Doe", "+79615882388", null);
         UserResponseDTO updated = new UserResponseDTO(2L, "Jane", "Doe", "+79615882388", null);
 
         Mockito.when(userService.updateUser(eq(1L), any())).thenReturn(updated);

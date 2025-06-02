@@ -1,9 +1,9 @@
 package com.avbinvest.user.service;
 
 import com.avbinvest.user.dto.CompanyDTO;
-import com.avbinvest.user.dto.UserRequestDTO;
+import com.avbinvest.user.dto.UserCreateDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
-import com.avbinvest.user.exception.CompanyNotFoundException;
+import com.avbinvest.user.dto.UserUpdateDTO;
 import com.avbinvest.user.exception.ConflictException;
 import com.avbinvest.user.exception.UserNotFoundException;
 import com.avbinvest.user.feignClient.CompanyClient;
@@ -12,7 +12,10 @@ import com.avbinvest.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -45,7 +48,7 @@ class UserServiceImplTest {
 
     @Test
     void shouldCreateUserWithoutCompany() {
-        UserRequestDTO dto = new UserRequestDTO("John", "Doe", "+1234567890", null);
+        UserCreateDTO dto = new UserCreateDTO("John", "Doe", "+1234567890", null);
 
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
@@ -64,7 +67,7 @@ class UserServiceImplTest {
 
     @Test
     void shouldCreateUserAndAddToCompany() {
-        UserRequestDTO dto = new UserRequestDTO("John", "Doe", "+1234567890", 1L);
+        UserCreateDTO dto = new UserCreateDTO("John", "Doe", "+1234567890", 1L);
 
         when(companyClient.getCompanyById(1L, false)).thenReturn(company);
         when(userRepository.save(any())).thenReturn(user);
@@ -77,7 +80,7 @@ class UserServiceImplTest {
 
     @Test
     void shouldThrowConflictOnDuplicatePhoneNumber() {
-        UserRequestDTO dto = new UserRequestDTO("John", "Doe", "+1234567890", null);
+        UserCreateDTO dto = new UserCreateDTO("John", "Doe", "+1234567890", null);
 
         when(userRepository.findUserByPhoneNumber("+1234567890")).thenReturn(new User());
 
@@ -88,7 +91,7 @@ class UserServiceImplTest {
     @Test
     void shouldUpdateUser() {
         User existing = new User(1L, "Old", "User", "+1234567890", 2L);
-        UserRequestDTO dto = new UserRequestDTO("Updated", "User", "+1234567890", 2L);
+        UserUpdateDTO dto = new UserUpdateDTO("Updated", "User", "+1234567890", 2L);
 
         when(userRepository.getUserById(1L)).thenReturn(Optional.of(existing));
         when(companyClient.getCompanyById(3L, false)).thenReturn(company);
@@ -147,15 +150,24 @@ class UserServiceImplTest {
 
 
     @Test
-    void shouldGetAllUsersWithCompanies() {
+    void shouldGetPagedUsersWithCompanies() {
+        // given
         user.setCompanyId(1L);
+        Page<User> userPage = new PageImpl<>(List.of(user));
+        Pageable pageable = PageRequest.of(0, 10);
 
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        when(userRepository.findAll(pageable)).thenReturn(userPage);
         when(companyClient.getCompanyById(1L, false)).thenReturn(company);
 
-        List<UserResponseDTO> result = userService.getAllUsers();
+        Page<UserResponseDTO> result = userService.getAllUsers(pageable);
 
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getCompany().getId()).isEqualTo(1L);
+        UserResponseDTO dto = result.getContent().getFirst();
+        assertThat(dto.getId()).isEqualTo(user.getId());
+        assertThat(dto.getCompany().getId()).isEqualTo(company.getId());
+
+        verify(userRepository).findAll(pageable);
+        verify(companyClient).getCompanyById(1L, false);
     }
+
 }

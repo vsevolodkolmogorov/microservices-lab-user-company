@@ -1,27 +1,27 @@
 package com.avbinvest.user.util;
 
 import com.avbinvest.user.dto.CompanyDTO;
-import com.avbinvest.user.dto.UserRequestDTO;
+import com.avbinvest.user.dto.UserCreateDTO;
 import com.avbinvest.user.dto.UserResponseDTO;
 import com.avbinvest.user.module.User;
 
 /**
  * Utility class for converting between User entities and User DTOs.
  * <p>
- * Provides methods to convert from {@link UserRequestDTO} to {@link User} entity
+ * Provides methods to convert from {@link UserCreateDTO} to {@link User} entity
  * and from {@link User} entity to {@link UserResponseDTO} with optional company data.
  * </p>
  */
 public class UserConverter {
 
     /**
-     * Converts a {@link UserRequestDTO} into a {@link User} entity.
+     * Converts a {@link UserCreateDTO} into a {@link User} entity.
      * Maps fields: firstName, lastName, phoneNumber, companyId.
      *
      * @param dto Data transfer object containing user creation or update data.
      * @return User entity constructed from DTO fields.
      */
-    public static User convertDtoToEntity(UserRequestDTO dto) {
+    public static User convertDtoToEntity(UserCreateDTO dto) {
         return User.builder()
                 .firstName(dto.getFirstName())
                 .lastName(dto.getLastName())

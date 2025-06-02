@@ -1,116 +1,72 @@
 package com.avbinvest.company.controller;
 
-import com.avbinvest.company.dto.CompanyRequestDTO;
+import com.avbinvest.company.dto.CompanyCreateDTO;
 import com.avbinvest.company.dto.CompanyResponseDTO;
+import com.avbinvest.company.dto.CompanyUpdateDTO;
 import com.avbinvest.company.service.CompanyService;
-import com.avbinvest.company.validation.OnCreate;
-import com.avbinvest.company.validation.OnUpdate;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
-/**
- * REST controller for managing companies.
- * Provides endpoints for CRUD operations and managing employees within companies.
- */
 @RestController
 @RequestMapping("/api/company")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class CompanyController {
 
     private final CompanyService companyService;
 
-    /**
-     * Retrieves a list of all companies.
-     *
-     * @return HTTP 200 with the list of companies.
-     */
     @GetMapping
-    public ResponseEntity<List<CompanyResponseDTO>> getAllCompanies() {
-        List<CompanyResponseDTO> companies = companyService.getAllCompanies(true);
-        return ResponseEntity.ok(companies);
+    public Page<CompanyResponseDTO> getAllCompanies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "true") boolean includeEmployees)  {
+        log.info("GET /api/company — getAllCompanies() page={} size={}", page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        return companyService.getAllCompanies(pageable, includeEmployees);
     }
 
-    /**
-     * Retrieves a company by its ID.
-     *
-     * @param id              the company ID
-     * @param includeEmployees whether to include employees in the response
-     * @return HTTP 200 with the company data
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<CompanyResponseDTO> getCompanyById(@PathVariable Long id,
-                                                             @RequestParam(defaultValue = "true") boolean includeEmployees) {
-        CompanyResponseDTO company = companyService.getCompanyById(id, includeEmployees);
-        return ResponseEntity.ok(company);
+    public CompanyResponseDTO getCompanyById(@PathVariable @Min(1) Long id,
+                                             @RequestParam(defaultValue = "true") boolean includeEmployees) {
+        log.info("GET /api/company/{} — includeEmployees={}", id, includeEmployees);
+        return companyService.getCompanyById(id, includeEmployees);
     }
 
-    /**
-     * Creates a new company.
-     *
-     * @param companyDTO company data for creation, validated on {@code OnCreate} group
-     * @return HTTP 201 with the created company data
-     */
     @PostMapping
-    public ResponseEntity<CompanyResponseDTO> createCompany(@Validated(OnCreate.class) @RequestBody CompanyRequestDTO companyDTO) {
-        CompanyResponseDTO company = companyService.createCompany(companyDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(company);
+    public CompanyResponseDTO createCompany(@Validated @RequestBody CompanyCreateDTO companyDTO) {
+        log.info("POST /api/company — createCompany: {}", companyDTO);
+        return companyService.createCompany(companyDTO);
     }
 
-    /**
-     * Adds an employee to a company.
-     *
-     * @param id     the company ID
-     * @param userId the user ID to add as employee
-     * @return HTTP 204 No Content
-     */
     @PostMapping("/{id}/addEmployee")
-    public ResponseEntity<Void> addEmployee(@PathVariable Long id, @RequestParam Long userId) {
+    public void addEmployee(@PathVariable @Min(1) Long id, @RequestParam @Min(1) Long userId) {
+        log.info("POST /api/company/{}/addEmployee — userId={}", id, userId);
         companyService.addEmployee(id, userId);
-        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Removes an employee from a company.
-     *
-     * @param id     the company ID
-     * @param userId the user ID to remove from the company
-     * @return HTTP 204 No Content
-     */
     @DeleteMapping("/{id}/removeEmployee")
-    public ResponseEntity<Void> removeEmployee(@PathVariable Long id, @RequestParam Long userId) {
+    public void removeEmployee(@PathVariable @Min(1) Long id, @RequestParam @Min(1) Long userId) {
+        log.info("DELETE /api/company/{}/removeEmployee — userId={}", id, userId);
         companyService.removeEmployee(id, userId);
-        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Updates an existing company.
-     *
-     * @param id         the company ID
-     * @param companyDTO company data for update, validated on {@code OnUpdate} group
-     * @return HTTP 200 with the updated company data
-     */
     @PutMapping("/{id}")
-    public ResponseEntity<CompanyResponseDTO> updateCompany(@PathVariable Long id,
-                                                            @Validated(OnUpdate.class) @RequestBody CompanyRequestDTO companyDTO) {
-        CompanyResponseDTO company = companyService.updateCompany(id, companyDTO);
-        return ResponseEntity.ok(company);
+    public CompanyResponseDTO updateCompany(@PathVariable @Min(1) Long id,
+                                            @Validated @RequestBody CompanyUpdateDTO companyDTO) {
+        log.info("PUT /api/company/{} — updateCompany: {}", id, companyDTO);
+        return companyService.updateCompany(id, companyDTO);
     }
 
-    /**
-     * Deletes a company by its ID.
-     *
-     * @param id the company ID
-     * @return HTTP 204 No Content
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCompany(@PathVariable Long id) {
+    public void deleteCompany(@PathVariable @Min(1) Long id) {
+        log.info("DELETE /api/company/{}", id);
         companyService.deleteCompany(id);
-        return ResponseEntity.noContent().build();
     }
 }

@@ -74,6 +74,11 @@ This is the recommended way to run the full system.
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 
+#### Run for all project
+```bash
+mvn clean package -DskipTests
+```
+
 #### 1. The project root requires an .env file to run in the docker profile.
 
 #### 2. Run the full stack:

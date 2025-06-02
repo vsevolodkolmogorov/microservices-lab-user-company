@@ -1,8 +1,6 @@
 package com.avbinvest.company.service;
 
-import com.avbinvest.company.dto.CompanyRequestDTO;
-import com.avbinvest.company.dto.CompanyResponseDTO;
-import com.avbinvest.company.dto.UserDTO;
+import com.avbinvest.company.dto.*;
 import com.avbinvest.company.exceptions.CompanyNotFoundException;
 import com.avbinvest.company.exceptions.ConflictException;
 import com.avbinvest.company.feignClient.UserClient;
@@ -34,16 +32,25 @@ class CompanyServiceImplTest {
     }
 
     @Test
-    void createCompany_shouldSaveCompanyAndReturnDTO() {
-        CompanyRequestDTO request = new CompanyRequestDTO("NewCompany", BigDecimal.valueOf(50000), List.of(1L, 2L));
+    void createCompany_shouldCreateCompanyWithValidUsers() {
+        CompanyCreateDTO request = new CompanyCreateDTO("NewCompany", BigDecimal.valueOf(50000), List.of(1L, 2L));
         Company savedCompany = new Company(1L, "NewCompany", BigDecimal.valueOf(50000), new ArrayList<>(List.of(1L, 2L)));
 
         when(companyRepository.getCompanyByName("NewCompany")).thenReturn(null);
         when(companyRepository.save(any(Company.class))).thenReturn(savedCompany);
-        when(userClient.getUsersByIds(List.of(1L, 2L))).thenReturn(List.of(
-                new UserDTO(1L, "User1", "user1@mail.com", "+79615882385"),
-                new UserDTO(2L, "User2", "user2@mail.com", "+79615882383")
-        ));
+
+        // Подготовка PageDTO<UserDTO>
+        UserDTO user1 = new UserDTO(1L, "User1", "user1@mail.com", "+79615882385");
+        UserDTO user2 = new UserDTO(2L, "User2", "user2@mail.com", "+79615882383");
+
+        PageDTO<UserDTO> userPage = new PageDTO<>(
+                List.of(user1, user2),
+                0, 10, // pageNumber, pageSize
+                2,     // totalElements
+                1      // totalPages
+        );
+
+        when(userClient.getUsersByIds(eq(List.of(1L, 2L)), anyInt(), anyInt())).thenReturn(userPage);
 
         CompanyResponseDTO response = companyService.createCompany(request);
 
@@ -53,7 +60,7 @@ class CompanyServiceImplTest {
 
     @Test
     void createCompany_shouldThrowConflict_whenNameExists() {
-        CompanyRequestDTO request = new CompanyRequestDTO("Existing", BigDecimal.valueOf(10000), List.of());
+        CompanyCreateDTO request = new CompanyCreateDTO("Existing", BigDecimal.valueOf(10000), List.of());
         when(companyRepository.getCompanyByName("Existing")).thenReturn(new Company());
 
         assertThrows(ConflictException.class, () -> companyService.createCompany(request));
@@ -62,33 +69,54 @@ class CompanyServiceImplTest {
     @Test
     void updateCompany_shouldUpdateAndReturnDTO() {
         Company existing = new Company(1L, "Old", BigDecimal.valueOf(10000), new ArrayList<>(List.of(1L)));
-        CompanyRequestDTO updateDto = new CompanyRequestDTO("Updated", BigDecimal.valueOf(20000), null);
+        CompanyUpdateDTO updateDto = new CompanyUpdateDTO("Updated", BigDecimal.valueOf(20000), null);
         Company updated = new Company(1L, "Updated", BigDecimal.valueOf(20000), new ArrayList<>(List.of(1L)));
 
         when(companyRepository.getCompanyById(1L)).thenReturn(Optional.of(existing));
         when(companyRepository.getCompanyByName("Updated")).thenReturn(null);
         when(companyRepository.save(any())).thenReturn(updated);
-        when(userClient.getUsersByIds(List.of(1L))).thenReturn(List.of(
-                new UserDTO(1L, "User1", "user1@mail.com", "+79615882383")
-        ));
+
+        // Подготовка PageDTO<UserDTO>
+        UserDTO user1 = new UserDTO(1L, "User1", "user1@mail.com", "+79615882383");
+        PageDTO<UserDTO> userPage = new PageDTO<>(
+                List.of(user1),
+                0, 10,
+                1,
+                1
+        );
+
+        when(userClient.getUsersByIds(eq(List.of(1L)), anyInt(), anyInt())).thenReturn(userPage);
 
         CompanyResponseDTO response = companyService.updateCompany(1L, updateDto);
+
         assertEquals("Updated", response.getName());
         assertEquals(BigDecimal.valueOf(20000), response.getBudget());
+        assertEquals(1, response.getEmployeeIds().size());
     }
+
 
     @Test
     void getCompanyById_shouldReturnDTO() {
         Company company = new Company(1L, "Comp", BigDecimal.valueOf(1000), List.of(5L));
 
         when(companyRepository.getCompanyById(1L)).thenReturn(Optional.of(company));
-        when(userClient.getUsersByIds(List.of(5L))).thenReturn(List.of(new UserDTO(5L, "User", "mail", "+79615882383")));
+
+        UserDTO user = new UserDTO(5L, "User", "mail", "+79615882383");
+        PageDTO<UserDTO> page = new PageDTO<>(
+                List.of(user),
+                0, 10,
+                1,
+                1
+        );
+
+        when(userClient.getUsersByIds(eq(List.of(5L)), anyInt(), anyInt())).thenReturn(page);
 
         CompanyResponseDTO dto = companyService.getCompanyById(1L, true);
 
         assertEquals("Comp", dto.getName());
         assertEquals(1, dto.getEmployeeIds().size());
     }
+
 
     @Test
     void getCompanyById_shouldThrowNotFound() {

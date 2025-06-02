@@ -1,5 +1,7 @@
 package com.avbinvest.company.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,10 +14,14 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CompanyResponseDTO {
+public class CompanyUpdateDTO {
 
-    private Long id;
+    @Size(min = 3, max = 100)
     private String name;
+
+    @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal budget;
-    private List<UserDTO> employeeIds;
+
+    private List<Long> employeeIds;
 }
+
