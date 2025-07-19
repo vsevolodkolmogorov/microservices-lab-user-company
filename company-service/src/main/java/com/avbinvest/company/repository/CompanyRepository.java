@@ -1,0 +1,11 @@
+package com.avbinvest.company.repository;
+
+import com.avbinvest.company.module.Company;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface CompanyRepository extends JpaRepository<Company, Long> {
+    Company getCompanyByName(String name);
+    Optional<Company> getCompanyById(Long id);
+}

@@ -1,4 +1,3 @@
-
 # Multi-Service User & Company System
 
 This is a microservices-based Java application designed to manage **users** and **companies**, using **Spring Boot**, **Spring Cloud (Netflix Eureka, Config, Gateway)**, and **PostgreSQL**. Each service interacts via REST and shares data using Feign clients. The system is containerized using Docker and orchestrated with Docker Compose.

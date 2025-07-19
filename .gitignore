@@ -23,7 +23,3 @@ Thumbs.db
 *.jar
 *.war
 docker-compose.override.yml
-
-# Env files
-.env
-**/.env
