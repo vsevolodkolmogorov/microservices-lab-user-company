@@ -6,8 +6,6 @@
 
 This is a microservices-based Java application designed to manage **users** and **companies**, using **Spring Boot**, **Spring Cloud (Netflix Eureka, Config, Gateway)**, and **PostgreSQL**. Each service interacts via REST and shares data using Feign clients. The system is containerized using Docker and orchestrated with Docker Compose.
 
----
-
 ## 🧩 Architecture
 
 This project consists of the following services:
@@ -21,8 +19,6 @@ This project consists of the following services:
 | **company-service** | Manages companies and communicates with user-service |
 | **PostgreSQL** | Database used by both company-service and user-service |
 
----
-
 ## 🛠️ Tech Stack
 
 - Java 21 (or latest stable)
@@ -34,8 +30,6 @@ This project consists of the following services:
 - MapStruct
 - Gradle
 
----
-
 ## 🚀 Features
 
 ### user-service
@@ -45,8 +39,6 @@ This project consists of the following services:
 ### company-service
 - CRUD operations on companies
 - Fetch companies with full list of user details (via Feign)
-
----
 
 ## ▶️ How to Run
 
