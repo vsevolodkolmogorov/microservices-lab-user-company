@@ -1,10 +1,14 @@
-# Multi-Service User & Company System
+### 🏷️ Type: Interview Assignment
+
+# Multi-Service User & Company System 
+
+## 📌 Overview
 
 This is a microservices-based Java application designed to manage **users** and **companies**, using **Spring Boot**, **Spring Cloud (Netflix Eureka, Config, Gateway)**, and **PostgreSQL**. Each service interacts via REST and shares data using Feign clients. The system is containerized using Docker and orchestrated with Docker Compose.
 
 ---
 
-## 🧩 Architecture Overview
+## 🧩 Architecture
 
 This project consists of the following services:
 
@@ -19,7 +23,7 @@ This project consists of the following services:
 
 ---
 
-## 🔧 Technologies
+## 🛠️ Tech Stack
 
 - Java 21 (or latest stable)
 - Spring Boot 3+
@@ -46,7 +50,7 @@ This project consists of the following services:
 
 ## ▶️ How to Run
 
-### Just information about .env ( local or docker )
+### 1. 📄 Environment Variables
 
 My project uses spring profiles to run. 
 I used it.env from which the necessary data is obtained using the env files plugin.
@@ -65,8 +69,9 @@ SPRING_PROFILES_ACTIVE=docker or local
 #### WARNING! 
 ##### user-service and company-service have same DB_USERNAME and DB_PASSWORD
 
+---
 
-### 1. 🐳 Docker-Based Launch
+### 2. 🐳 Docker-Based Launch
 
 This is the recommended way to run the full system.
 
@@ -93,7 +98,9 @@ docker-compose up --build
 
 You can test endpoints using Postman or curl.
 
-### 2. 💻 Local Development (without Docker)
+---
+
+### 3. 💻 Local Development (without Docker)
 
 You can run services individually using your IDE (IntelliJ recommended):
 
